@@ -1,0 +1,16 @@
+# Helm package files
+*.tgz
+
+# Development files
+.DS_Store
+*.swp
+*.bak
+*~
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Temporary files
+/tmp/

@@ -1,0 +1,93 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your Hasura GraphQL Engine has been deployed.
+
+Release Name: {{ .Release.Name }}
+Namespace: {{ include "graphql.namespace" . }}
+
+===================================================================================
+IMPORTANT: PostgreSQL Setup Required
+===================================================================================
+
+Before Hasura can start, you need to:
+
+1. Ensure CloudNativePG PostgreSQL Operator is installed
+2. Create a PostgreSQL cluster named "{{ .Values.postgresql.clusterName }}"
+3. Database CRDs will be created automatically for:
+   - Data DB: {{ include "graphql.dataDatabaseName" . }}
+   - Metadata DB: {{ include "graphql.metadataDatabaseName" . }}
+
+===================================================================================
+Access Hasura Console
+===================================================================================
+
+To access the Hasura console, run:
+
+  kubectl port-forward -n {{ include "graphql.namespace" . }} \
+    svc/{{ include "graphql.fullname" . }} {{ .Values.hasura.port }}:{{ .Values.hasura.port }}
+
+Then visit: http://localhost:{{ .Values.hasura.port }}/console
+
+Admin Secret: {{ .Values.hasura.env.adminSecret }}
+  (Set via header: x-hasura-admin-secret)
+
+===================================================================================
+PostgreSQL CLI Access
+===================================================================================
+
+{{- if .Values.psqlSidecar.enabled }}
+To access PostgreSQL via psql CLI, exec into the psql sidecar:
+
+  POD=$(kubectl get pod -n {{ include "graphql.namespace" . }} \
+    -l app.kubernetes.io/instance={{ .Release.Name }} \
+    -o jsonpath='{.items[0].metadata.name}')
+
+  # Connect to data database
+  kubectl exec -it $POD -n {{ include "graphql.namespace" . }} -c psql -- psql
+
+  # Or manually specify database
+  kubectl exec -it $POD -n {{ include "graphql.namespace" . }} -c psql -- \
+    psql -d {{ include "graphql.metadataDatabaseName" . }}
+
+Environment variables are pre-configured for automatic connection:
+  - PGHOST: {{ printf "%s.%s.svc.cluster.local" .Values.postgresql.service (include "graphql.namespace" .) }}
+  - PGPORT: {{ .Values.postgresql.port }}
+  - PGDATABASE: {{ include "graphql.dataDatabaseName" . }}
+  - PGUSER: {{ .Values.postgresql.user }}
+  - PGPASSWORD: ****
+{{- else }}
+PostgreSQL CLI sidecar is disabled. Enable it with:
+  --set psqlSidecar.enabled=true
+{{- end }}
+
+===================================================================================
+GraphQL Endpoint
+===================================================================================
+
+GraphQL API: http://{{ include "graphql.fullname" . }}.{{ include "graphql.namespace" . }}.svc.cluster.local:{{ .Values.hasura.port }}/v1/graphql
+
+For external access, create an Ingress or use port-forward.
+
+===================================================================================
+Next Steps
+===================================================================================
+
+1. Access the Hasura console (see above)
+2. Track your PostgreSQL tables in the Hasura console
+3. Create GraphQL queries and mutations
+4. Set up permissions and authentication
+5. Configure webhooks and actions as needed
+
+Documentation: https://hasura.io/docs/latest/graphql/core/index.html
+
+===================================================================================
+Security Notice
+===================================================================================
+
+IMPORTANT: Change default credentials in production!
+
+- Admin secret: {{ .Values.hasura.env.adminSecret }}
+- PostgreSQL password: {{ .Values.postgresql.password }}
+
+Use external secret management (Sealed Secrets, External Secrets, etc.)
+for production deployments.

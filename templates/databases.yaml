@@ -1,0 +1,32 @@
+---
+{{- if .Values.postgresql.createDatabases }}
+# Data database for GraphQL application
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: {{ include "graphql.fullname" . }}-data
+  namespace: {{ include "graphql.namespace" . }}
+  labels:
+    {{- include "graphql.labels" . | nindent 4 }}
+    database-type: data
+spec:
+  name: {{ include "graphql.dataDatabaseName" . }}
+  cluster:
+    name: {{ .Values.postgresql.clusterName }}
+  owner: {{ .Values.postgresql.user }}
+---
+# Metadata database for Hasura internal state
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: {{ include "graphql.fullname" . }}-metadata
+  namespace: {{ include "graphql.namespace" . }}
+  labels:
+    {{- include "graphql.labels" . | nindent 4 }}
+    database-type: metadata
+spec:
+  name: {{ include "graphql.metadataDatabaseName" . }}
+  cluster:
+    name: {{ .Values.postgresql.clusterName }}
+  owner: {{ .Values.postgresql.user }}
+{{- end }}

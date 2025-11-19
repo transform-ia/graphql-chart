@@ -1,0 +1,158 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "graphql.fullname" . }}
+  namespace: {{ include "graphql.namespace" . }}
+  labels:
+    {{- include "graphql.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "graphql.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "graphql.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+      {{- with include "graphql.imagePullSecrets" . }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "graphql.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.securityContext | nindent 8 }}
+      containers:
+        # Hasura GraphQL Engine
+        - name: hasura
+          image: "{{ .Values.hasura.image.repository }}:{{ .Values.hasura.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.hasura.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.hasura.port }}
+              protocol: TCP
+          env:
+            - name: TZ
+              value: {{ .Values.global.timezone }}
+            # Database connection
+            - name: HASURA_GRAPHQL_DATABASE_URL
+              value: {{ include "graphql.databaseURL" . | quote }}
+            # Metadata database (optional, can use same as data)
+            - name: HASURA_GRAPHQL_METADATA_DATABASE_URL
+              value: {{ include "graphql.databaseURL" . | quote }}
+            # Admin secret
+            - name: HASURA_GRAPHQL_ADMIN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "graphql.fullname" . }}
+                  key: admin-secret
+            # Enable console
+            - name: HASURA_GRAPHQL_ENABLE_CONSOLE
+              value: {{ .Values.hasura.env.enableConsole | quote }}
+            # Dev mode
+            - name: HASURA_GRAPHQL_DEV_MODE
+              value: {{ .Values.hasura.env.devMode | quote }}
+            # Telemetry
+            - name: HASURA_GRAPHQL_ENABLE_TELEMETRY
+              value: {{ .Values.hasura.env.enableTelemetry | quote }}
+            {{- range .Values.hasura.extraEnv }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- if .Values.storage.enabled }}
+            - name: storage
+              mountPath: {{ .Values.storage.mountPath }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        {{- if .Values.psqlSidecar.enabled }}
+        # PostgreSQL CLI sidecar for psql access
+        - name: psql
+          image: "{{ .Values.psqlSidecar.image.repository }}:{{ .Values.psqlSidecar.image.tag }}"
+          imagePullPolicy: {{ .Values.psqlSidecar.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              echo "PostgreSQL CLI container ready. Exec into this container and run 'psql' to connect."
+              echo "Data database: {{ include "graphql.dataDatabaseName" . }}"
+              echo "Metadata database: {{ include "graphql.metadataDatabaseName" . }}"
+              tail -f /dev/null
+          env:
+            - name: PGHOST
+              value: {{ printf "%s.%s.svc.cluster.local" .Values.postgresql.service (include "graphql.namespace" .) }}
+            - name: PGPORT
+              value: {{ .Values.postgresql.port | quote }}
+            - name: PGDATABASE
+              value: {{ include "graphql.dataDatabaseName" . }}
+            - name: PGUSER
+              value: {{ .Values.postgresql.user }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "graphql.fullname" . }}
+                  key: postgres-password
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 999
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 32Mi
+        {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi
+        {{- if .Values.storage.enabled }}
+        - name: storage
+          persistentVolumeClaim:
+            claimName: {{ include "graphql.fullname" . }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

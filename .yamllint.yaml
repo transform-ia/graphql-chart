@@ -1,0 +1,21 @@
+---
+extends: default
+
+# Ignore Helm template files - they contain Go template syntax, not pure YAML
+ignore: |
+  templates/
+  charts/
+
+rules:
+  line-length:
+    max: 120
+    level: warning
+  indentation:
+    spaces: 2
+  # Disable document-start requirement (not needed for values.yaml)
+  document-start: disable
+  comments:
+    min-spaces-from-content: 1
+    level: warning
+  truthy:
+    allowed-values: ['true', 'false', 'on', 'off']

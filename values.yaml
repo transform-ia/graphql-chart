@@ -1,0 +1,166 @@
+---
+# GraphQL development environment with Hasura and CloudNativePG PostgreSQL
+
+# Global settings
+global:
+  namespace: graphql-dev
+  timezone: America/Montreal
+
+# Hasura configuration
+hasura:
+  image:
+    repository: hasura/graphql-engine
+    tag: ""  # Defaults to .Chart.AppVersion if empty
+    pullPolicy: IfNotPresent
+
+  # Port configuration
+  port: 8080
+
+  # Environment variables for Hasura
+  # IMPORTANT: In production, use external secret management
+  env:
+    # Admin secret for Hasura console and API access
+    adminSecret: "myadminsecret"
+
+    # Enable console (set to 'false' in production)
+    enableConsole: "true"
+
+    # Enable dev mode (set to 'false' in production)
+    devMode: "true"
+
+    # Enable telemetry (set to 'false' to disable)
+    enableTelemetry: "false"
+
+  # Additional environment variables (non-sensitive)
+  extraEnv: []
+  # Example:
+  # - name: HASURA_GRAPHQL_UNAUTHORIZED_ROLE
+  #   value: "anonymous"
+
+# PostgreSQL configuration (CloudNativePG)
+postgresql:
+  # PostgreSQL cluster reference (must exist)
+  clusterName: postgres
+
+  # Service for PostgreSQL (within cluster)
+  # Format: <clusterName>-rw.<namespace>.svc.cluster.local
+  service: postgres-rw
+
+  # Port (standard PostgreSQL)
+  port: 5432
+
+  # Database user (created by Database CRDs)
+  # Will be created as owner of both data and metadata databases
+  user: graphql
+
+  # Database password (IMPORTANT: change in production)
+  password: "changeme"
+
+  # Data database name (defaults to release name)
+  # This will be created as a Database CRD
+  dataDatabase: ""  # Empty = use .Release.Name
+
+  # Metadata database name (defaults to release name + '-hasura')
+  # This will be created as a Database CRD
+  metadataDatabase: ""  # Empty = use .Release.Name-hasura
+
+  # Create Database CRDs
+  createDatabases: true
+
+# PostgreSQL CLI sidecar (for psql access)
+psqlSidecar:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16-alpine"
+    pullPolicy: IfNotPresent
+
+# Replica count (always 1 for development)
+replicaCount: 1
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+  annotations: {}
+
+# Service account and RBAC
+serviceAccount:
+  create: true
+  name: graphql-dev
+  automountToken: true
+
+rbac:
+  create: true
+  # Namespace-scoped permissions for development
+  rules:
+    - apiGroups: ["", "apps"]
+      resources:
+        - pods
+        - deployments
+        - services
+        - configmaps
+      verbs: ["get", "list", "watch"]
+
+# Persistent storage (if needed for migrations, etc.)
+storage:
+  enabled: false
+  size: 1Gi
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  mountPath: /hasura-storage
+
+# Resources
+resources: {}
+# Uncomment to set resource limits and requests:
+# resources:
+#   limits:
+#     cpu: 1000m
+#     memory: 2Gi
+#   requests:
+#     cpu: 250m
+#     memory: 512Mi
+
+# Network policies
+networkPolicies:
+  enabled: true
+  allowDNS: true
+  allowHTTPSEgress: true
+  # Allow ingress from Claude Code and other dev tools
+  allowIngressFrom:
+    - app: claude-code
+    - app: ingress-nginx
+
+# Pod security
+securityContext:
+  fsGroup: 999
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container security
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 999
+  capabilities:
+    drop:
+      - ALL
+
+# Pod Security Standards
+podSecurityStandard: restricted
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Labels applied to all resources
+labels: {}
+
+# Annotations applied to all resources
+annotations: {}

@@ -1,0 +1,23 @@
+---
+apiVersion: v2
+name: graphql-chart
+description: GraphQL development environment with Hasura and CloudNativePG PostgreSQL
+type: application
+version: 0.0.1
+appVersion: "v2.40.0"
+
+keywords:
+  - graphql
+  - hasura
+  - postgresql
+  - cloudnativepg
+  - development
+
+maintainers:
+  - name: Transform IA
+    email: bruno.clermont@gmail.com
+
+sources:
+  - https://github.com/transform-ia/graphql-chart
+
+home: https://github.com/transform-ia/graphql-chart

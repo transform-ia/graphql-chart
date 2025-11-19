@@ -1,0 +1,98 @@
+---
+{{- if .Values.networkPolicies.enabled }}
+# Allow DNS resolution
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "graphql.fullname" . }}-allow-dns
+  namespace: {{ include "graphql.namespace" . }}
+  labels:
+    {{- include "graphql.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "graphql.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+{{- if .Values.networkPolicies.allowHTTPSEgress }}
+# Allow HTTPS egress for external APIs
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "graphql.fullname" . }}-allow-https-egress
+  namespace: {{ include "graphql.namespace" . }}
+  labels:
+    {{- include "graphql.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "graphql.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+{{- end }}
+---
+# Allow ingress from specified sources
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "graphql.fullname" . }}-allow-ingress
+  namespace: {{ include "graphql.namespace" . }}
+  labels:
+    {{- include "graphql.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "graphql.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    {{- range .Values.networkPolicies.allowIngressFrom }}
+    - from:
+        - podSelector:
+            matchLabels:
+              app: {{ .app }}
+      ports:
+        - protocol: TCP
+          port: {{ $.Values.hasura.port }}
+    {{- end }}
+---
+# Allow egress to PostgreSQL
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "graphql.fullname" . }}-allow-postgres
+  namespace: {{ include "graphql.namespace" . }}
+  labels:
+    {{- include "graphql.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "graphql.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: {{ .Values.postgresql.clusterName }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.postgresql.port }}
+{{- end }}
