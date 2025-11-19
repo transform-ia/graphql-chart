@@ -1,7 +1,7 @@
 # GraphQL Chart
 
-Helm chart for deploying a complete GraphQL development environment with Hasura GraphQL Engine and CloudNativePG
-PostgreSQL integration.
+Helm chart for deploying a complete GraphQL development environment with Hasura
+GraphQL Engine and CloudNativePG PostgreSQL integration.
 
 ## Overview
 
@@ -87,7 +87,7 @@ helm install my-graphql . -f my-values.yaml
 | `postgresql.port` | PostgreSQL port | `5432` |
 | `postgresql.user` | Database user | `graphql` |
 | `postgresql.password` | Database password | `changeme` |
-| `postgresql.dataDatabase` | Data database name (defaults to release name) | `""` |
+| `postgresql.dataDatabase` | Data database (defaults to release) | `""` |
 | `postgresql.metadataDatabase` | Metadata database name | `"<release>-hasura"` |
 | `postgresql.createDatabases` | Create Database CRDs | `true` |
 
@@ -140,7 +140,7 @@ Environment variables are pre-configured:
 
 The GraphQL API is available at:
 
-```
+```text
 http://<release>-graphql-chart.<namespace>.svc.cluster.local:8080/v1/graphql
 ```
 
@@ -400,6 +400,6 @@ MIT License - see repository for details
 
 ## Support
 
-- Issues: https://github.com/transform-ia/graphql-chart/issues
-- Documentation: https://hasura.io/docs/
-- CloudNativePG: https://cloudnative-pg.io/
+- Issues: <https://github.com/transform-ia/graphql-chart/issues>
+- Documentation: <https://hasura.io/docs/>
+- CloudNativePG: <https://cloudnative-pg.io/>

@@ -9,10 +9,12 @@
 POD=$(kubectl get pod -n claude -l app=claude-code -o jsonpath='{.items[0].metadata.name}')
 
 # Lint the chart
-kubectl exec -n claude $POD -c helm -- helm lint /workspace/sandbox/graphql-chart
+kubectl exec -n claude $POD -c helm -- \
+  helm lint /workspace/sandbox/graphql-chart
 
 # Strict linting
-kubectl exec -n claude $POD -c helm -- helm lint /workspace/sandbox/graphql-chart --strict
+kubectl exec -n claude $POD -c helm -- \
+  helm lint /workspace/sandbox/graphql-chart --strict
 ```
 
 ### 2. Template Rendering

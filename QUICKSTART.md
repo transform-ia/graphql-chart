@@ -171,5 +171,5 @@ kubectl logs -n graphql-dev $POD -c hasura
 ## Resources
 
 - Full README: `/workspace/sandbox/graphql-chart/README.md`
-- Hasura Docs: https://hasura.io/docs/
-- CloudNativePG Docs: https://cloudnative-pg.io/
+- Hasura Docs: <https://hasura.io/docs/>
+- CloudNativePG Docs: <https://cloudnative-pg.io/>
