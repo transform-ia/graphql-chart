@@ -89,8 +89,7 @@ spec:
             failureThreshold: 3
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-        {{- if .Values.psqlSidecar.enabled }}
-        # PostgreSQL CLI sidecar for psql access
+        # PostgreSQL CLI sidecar for psql access (always enabled)
         - name: psql
           image: "{{ .Values.psqlSidecar.image.repository }}:{{ .Values.psqlSidecar.image.tag }}"
           imagePullPolicy: {{ .Values.psqlSidecar.image.pullPolicy }}
@@ -134,7 +133,6 @@ spec:
             requests:
               cpu: 10m
               memory: 32Mi
-        {{- end }}
       volumes:
         - name: tmp
           emptyDir:

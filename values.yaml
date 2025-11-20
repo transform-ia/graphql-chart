@@ -67,9 +67,9 @@ postgresql:
   # Create Database CRDs
   createDatabases: true
 
-# PostgreSQL CLI sidecar (for psql access)
+# PostgreSQL CLI sidecar (always enabled for database access)
+# This sidecar provides psql CLI access to the PostgreSQL databases
 psqlSidecar:
-  enabled: true
   image:
     repository: postgres
     tag: "16-alpine"
@@ -81,7 +81,7 @@ replicaCount: 1
 # Service configuration
 service:
   type: ClusterIP
-  port: 8080
+  port: 80
   annotations: {}
 
 # Service account and RBAC

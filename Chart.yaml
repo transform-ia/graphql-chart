@@ -3,7 +3,7 @@ apiVersion: v2
 name: graphql-chart
 description: GraphQL development environment with Hasura and CloudNativePG PostgreSQL
 type: application
-version: 0.0.2
+version: 0.0.3
 appVersion: "v2.40.0"
 
 keywords:
@@ -21,3 +21,5 @@ sources:
   - https://github.com/transform-ia/graphql-chart
 
 home: https://github.com/transform-ia/graphql-chart
+
+dependencies: []
