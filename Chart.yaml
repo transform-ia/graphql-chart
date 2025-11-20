@@ -3,7 +3,7 @@ apiVersion: v2
 name: graphql-chart
 description: GraphQL development environment with Hasura and CloudNativePG PostgreSQL
 type: application
-version: 0.0.1
+version: 0.0.2
 appVersion: "v2.40.0"
 
 keywords:
